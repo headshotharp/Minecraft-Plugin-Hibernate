@@ -31,26 +31,26 @@ import org.hibernate.service.ServiceRegistry;
 import org.reflections.Reflections;
 
 import de.headshotharp.plugin.hibernate.config.HibernateConfig;
-import de.headshotharp.plugin.hibernate.dao.DataAccessObject;
+import jakarta.persistence.Entity;
 
 public class HibernateUtils {
 
     private HibernateConfig hibernateConfig;
-    private List<Class<? extends DataAccessObject>> daoClasses;
+    private List<Class<?>> daoClasses;
 
     public HibernateUtils(HibernateConfig hibernateConfig, Class<?> baseClass) {
         this.hibernateConfig = hibernateConfig;
         daoClasses = scanEntitys(baseClass);
     }
 
-    public HibernateUtils(HibernateConfig hibernateConfig, List<Class<? extends DataAccessObject>> daoClasses) {
+    public HibernateUtils(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
         this.hibernateConfig = hibernateConfig;
         this.daoClasses = daoClasses;
     }
 
-    private List<Class<? extends DataAccessObject>> scanEntitys(Class<?> baseClass) {
+    private List<Class<?>> scanEntitys(Class<?> baseClass) {
         Reflections reflections = new Reflections(baseClass.getPackageName());
-        return reflections.getSubTypesOf(DataAccessObject.class).stream()
+        return reflections.getTypesAnnotatedWith(Entity.class).stream()
                 .filter(c -> !Modifier.isAbstract(c.getModifiers())).toList();
     }
 

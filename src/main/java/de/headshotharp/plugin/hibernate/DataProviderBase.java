@@ -26,7 +26,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
 import de.headshotharp.plugin.hibernate.config.HibernateConfig;
-import de.headshotharp.plugin.hibernate.dao.DataAccessObject;
 
 public class DataProviderBase {
 
@@ -36,7 +35,7 @@ public class DataProviderBase {
         sessionFactory = new HibernateUtils(hibernateConfig, baseClass).createSessionFactory();
     }
 
-    public DataProviderBase(HibernateConfig hibernateConfig, List<Class<? extends DataAccessObject>> daoClasses) {
+    public DataProviderBase(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
         sessionFactory = new HibernateUtils(hibernateConfig, daoClasses).createSessionFactory();
     }
 
@@ -57,11 +56,11 @@ public class DataProviderBase {
         session.close();
     }
 
-    public void persist(DataAccessObject o) {
+    public void persist(Object o) {
         execInTransaction(session -> session.persist(o));
     }
 
-    public void delete(DataAccessObject o) {
+    public void delete(Object o) {
         execInTransaction(session -> session.remove(o));
     }
 }
