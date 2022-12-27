@@ -23,8 +23,19 @@ import java.util.List;
 
 import org.hibernate.Session;
 
+/**
+ * Functional interface to execute inside a transaction.
+ *
+ * @param <T> Entity type
+ */
 @FunctionalInterface
 public interface InTransactionExecutor<T> {
 
+    /**
+     * Function to be executed in a transaction given the session.
+     *
+     * @param session current session
+     * @return list of entities
+     */
     public List<T> executeInTransaction(Session session);
 }

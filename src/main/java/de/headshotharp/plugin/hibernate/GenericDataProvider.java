@@ -34,25 +34,62 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.Getter;
 
+/**
+ * Abstract class to create specific data providers for given entity classes
+ *
+ * @param <T> Entity class for the implementing data provider
+ */
 @Getter
 public abstract class GenericDataProvider<T> {
 
     private SessionFactory sessionFactory;
 
+    /**
+     * Create GenericDataProvider with given SessionFactory
+     *
+     * @param sessionFactory given SessionFactory
+     */
     protected GenericDataProvider(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
+    /**
+     * Create GenericDataProvider and create new HikariCP connection pool for the
+     * required SessionFactory. Scans the classpath below given baseClass
+     * for @Entity classes.
+     *
+     * @param hibernateConfig config for hibernate
+     * @param baseClass       base class to start scanning for entity classes
+     */
     protected GenericDataProvider(HibernateConfig hibernateConfig, Class<?> baseClass) {
         sessionFactory = new HibernateUtils(hibernateConfig, baseClass).createSessionFactory();
     }
 
+    /**
+     * Create GenericDataProvider and create new HikariCP connection pool for the
+     * required SessionFactory. Uses the given entity classes.
+     *
+     * @param hibernateConfig config for hibernate
+     * @param daoClasses      given entity classes
+     */
     protected GenericDataProvider(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
         sessionFactory = new HibernateUtils(hibernateConfig, daoClasses).createSessionFactory();
     }
 
+    /**
+     * Specifies the entity class of this data provider
+     *
+     * @return entity class
+     */
     public abstract Class<T> getEntityClass();
 
+    /**
+     * Executes the given executor in transaction and returns the resulting entity
+     * list.
+     *
+     * @param ite the executor
+     * @return entity list returned by the executor
+     */
     public List<T> getInTransaction(InTransactionExecutor<T> ite) {
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
@@ -62,6 +99,13 @@ public abstract class GenericDataProvider<T> {
         return ret;
     }
 
+    /**
+     * Executes the given executor in transaction and returns the amount of changed
+     * rows.
+     *
+     * @param ite the executor
+     * @return the amount of changed rows
+     */
     public int execInTransaction(InTransactionExecutorVoid ite) {
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
@@ -71,10 +115,21 @@ public abstract class GenericDataProvider<T> {
         return changed;
     }
 
-    public List<T> findAllByPredicate() {
+    /**
+     * Finds all entitys.
+     *
+     * @return list of all entities
+     */
+    public List<T> findAll() {
         return findAllByPredicate(null);
     }
 
+    /**
+     * Find all entitys in transaction filtered by the given predicate provider
+     *
+     * @param predicateProvider filter for results
+     * @return list of found entities
+     */
     public List<T> findAllByPredicate(PredicateProvider<T> predicateProvider) {
         return getInTransaction(session -> {
             CriteriaBuilder builder = session.getCriteriaBuilder();
@@ -90,10 +145,13 @@ public abstract class GenericDataProvider<T> {
         });
     }
 
-    public Optional<T> findByPredicate() {
-        return findByPredicate(null);
-    }
-
+    /**
+     * Find unique entity in transaction filtered by the given predicate provider.
+     * Returns empty if none or multiple results are found.
+     *
+     * @param predicateProvider filter for results
+     * @return found entity
+     */
     public Optional<T> findByPredicate(PredicateProvider<T> predicateProvider) {
         List<T> resultList = findAllByPredicate(predicateProvider);
         if (resultList.size() == 1) {
@@ -103,16 +161,26 @@ public abstract class GenericDataProvider<T> {
         }
     }
 
-    public void persist(T o) {
+    /**
+     * Persists the given object
+     *
+     * @param t Object to persist
+     */
+    public void persist(T t) {
         execInTransaction(session -> {
-            session.persist(o);
+            session.persist(t);
             return 1;
         });
     }
 
-    public void delete(T o) {
+    /**
+     * Deletes the given entity object
+     *
+     * @param t Entity to delete
+     */
+    public void delete(T t) {
         execInTransaction(session -> {
-            session.remove(o);
+            session.remove(t);
             return 1;
         });
     }

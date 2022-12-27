@@ -21,8 +21,17 @@ package de.headshotharp.plugin.hibernate;
 
 import org.hibernate.Session;
 
+/**
+ * Functional interface to execute inside a transaction.
+ */
 @FunctionalInterface
 public interface InTransactionExecutorVoid {
 
+    /**
+     * Function to be executed in a transaction given the session.
+     *
+     * @param session current session
+     * @return amount of changed rows
+     */
     public int executeInTransaction(Session session);
 }

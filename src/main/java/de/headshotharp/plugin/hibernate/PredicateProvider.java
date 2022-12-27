@@ -26,8 +26,22 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
+/**
+ * Functional interface to add predicates to a generic entity query
+ *
+ * @param <T> Entity type
+ */
+@FunctionalInterface
 public interface PredicateProvider<T> {
 
+    /**
+     * Function to add predicates to query
+     *
+     * @param builder    CriteriaBuilder of current query
+     * @param criteria   CriteriaQuery of current query
+     * @param root       Reference of base entity
+     * @param predicates list of predicates to add predicates to
+     */
     public void addPredicates(CriteriaBuilder builder, CriteriaQuery<T> criteria, Root<T> root,
             List<Predicate> predicates);
 }

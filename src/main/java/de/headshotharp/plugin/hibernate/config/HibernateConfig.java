@@ -25,6 +25,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Simple pojo class to configure hibernate. Can be used to serialize and
+ * deserialize config files.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

@@ -34,19 +34,37 @@ import org.reflections.Reflections;
 import de.headshotharp.plugin.hibernate.config.HibernateConfig;
 import jakarta.persistence.Entity;
 
+/**
+ * Utitlity class to configure hibernate session factory. Can optionally scan
+ * the classpath for hibernate entities annotated with
+ * {@link jakarta.persistence.Entity @Entity}. Creates a connection pool using
+ * HikariCP.
+ */
 public class HibernateUtils {
 
     private HibernateConfig hibernateConfig;
-    private List<Class<?>> daoClasses;
+    private List<Class<?>> entityClasses;
 
+    /**
+     * Creates hibernate utility object and scans for entity classes in the package
+     * given by the base class.
+     *
+     * @param hibernateConfig connection configuration
+     * @param baseClass       base class to start entity scanning from
+     */
     public HibernateUtils(HibernateConfig hibernateConfig, Class<?> baseClass) {
         this.hibernateConfig = hibernateConfig;
-        daoClasses = scanEntitys(baseClass);
+        entityClasses = scanEntitys(baseClass);
     }
 
-    public HibernateUtils(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
+    /**
+     *
+     * @param hibernateConfig connection configuration
+     * @param entityClasses   list of entity classes
+     */
+    public HibernateUtils(HibernateConfig hibernateConfig, List<Class<?>> entityClasses) {
         this.hibernateConfig = hibernateConfig;
-        this.daoClasses = daoClasses;
+        this.entityClasses = entityClasses;
     }
 
     private List<Class<?>> scanEntitys(Class<?> baseClass) {
@@ -55,6 +73,11 @@ public class HibernateUtils {
                 .filter(c -> !Modifier.isAbstract(c.getModifiers())).toList();
     }
 
+    /**
+     * Creates a new session factory including a hikari connection pool.
+     *
+     * @return the created session factory
+     */
     public SessionFactory createSessionFactory() {
         if (hibernateConfig == null) {
             throw new IllegalStateException("HibernateUtils has no config");
@@ -74,7 +97,7 @@ public class HibernateUtils {
         // boilerplate
         configuration.setProperties(properties);
         // configure entity classes
-        daoClasses.forEach(configuration::addAnnotatedClass);
+        entityClasses.forEach(configuration::addAnnotatedClass);
         // setup session factory
         ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                 .applySettings(configuration.getProperties()).build();
