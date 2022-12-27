@@ -50,6 +50,9 @@
         <!-- versions -->
         <lombok.version>1.18.24</lombok.version>
         <hibenate.version>6.1.6.Final</hibenate.version>
+        <hibenate-validator.version>8.0.0.Final</hibenate-validator.version>
+        <validation-api.version>3.0.2</validation-api.version>
+        <glassfish-el.version>4.0.2</glassfish-el.version>
         <mysql.version>8.0.31</mysql.version>
         <postgres.version>42.5.1</postgres.version>
         <h2.version>2.1.214</h2.version>
@@ -73,6 +76,21 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibenate.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibenate-validator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>${glassfish-el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${validation-api.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate.orm</groupId>

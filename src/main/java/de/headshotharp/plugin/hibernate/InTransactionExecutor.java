@@ -19,10 +19,12 @@
  */
 package de.headshotharp.plugin.hibernate;
 
+import java.util.List;
+
 import org.hibernate.Session;
 
 @FunctionalInterface
 public interface InTransactionExecutor<T> {
 
-    public T executeInTransaction(Session session);
+    public List<T> executeInTransaction(Session session);
 }

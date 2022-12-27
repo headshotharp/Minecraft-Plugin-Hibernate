@@ -19,30 +19,46 @@
  */
 package de.headshotharp.plugin.hibernate;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
 import de.headshotharp.plugin.hibernate.config.HibernateConfig;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import lombok.Getter;
 
-public class DataProviderBase {
+@Getter
+public class DataProviderBase<T> {
 
     private SessionFactory sessionFactory;
+    private Class<T> clazz;
 
-    public DataProviderBase(HibernateConfig hibernateConfig, Class<?> baseClass) {
+    public DataProviderBase(Class<T> clazz, SessionFactory sessionFactory) {
+        this.clazz = clazz;
+        this.sessionFactory = sessionFactory;
+    }
+
+    public DataProviderBase(Class<T> clazz, HibernateConfig hibernateConfig, Class<?> baseClass) {
+        this.clazz = clazz;
         sessionFactory = new HibernateUtils(hibernateConfig, baseClass).createSessionFactory();
     }
 
-    public DataProviderBase(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
+    public DataProviderBase(Class<T> clazz, HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
+        this.clazz = clazz;
         sessionFactory = new HibernateUtils(hibernateConfig, daoClasses).createSessionFactory();
     }
 
-    public <T> T getInTransaction(InTransactionExecutor<T> ite) {
+    public List<T> getInTransaction(InTransactionExecutor<T> ite) {
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
-        T ret = ite.executeInTransaction(session);
+        List<T> ret = ite.executeInTransaction(session);
         transaction.commit();
         session.close();
         return ret;
@@ -54,6 +70,38 @@ public class DataProviderBase {
         ite.executeInTransaction(session);
         transaction.commit();
         session.close();
+    }
+
+    public List<T> findAllByPredicate() {
+        return findAllByPredicate(null);
+    }
+
+    public List<T> findAllByPredicate(PredicateProvider<T> predicateProvider) {
+        return getInTransaction(session -> {
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<T> criteria = builder.createQuery(clazz);
+            Root<T> root = criteria.from(clazz);
+            // set predicates
+            List<Predicate> predicates = new LinkedList<>();
+            if (predicateProvider != null) {
+                predicateProvider.addPredicates(builder, criteria, root, predicates);
+            }
+            criteria.where(builder.and(predicates.toArray(new Predicate[0])));
+            return session.createQuery(criteria).getResultList();
+        });
+    }
+
+    public Optional<T> findByPredicate() {
+        return findByPredicate(null);
+    }
+
+    public Optional<T> findByPredicate(PredicateProvider<T> predicateProvider) {
+        List<T> resultList = findAllByPredicate(predicateProvider);
+        if (resultList.size() == 1) {
+            return Optional.of(resultList.get(0));
+        } else {
+            return Optional.empty();
+        }
     }
 
     public void persist(Object o) {
