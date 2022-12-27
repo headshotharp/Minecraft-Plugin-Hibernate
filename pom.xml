@@ -93,8 +93,8 @@
             <version>${validation-api.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-c3p0</artifactId>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-hikaricp</artifactId>
             <version>${hibenate.version}</version>
         </dependency>
         <dependency>

@@ -27,6 +27,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.hikaricp.internal.HikariCPConnectionProvider;
 import org.hibernate.service.ServiceRegistry;
 import org.reflections.Reflections;
 
@@ -69,11 +70,7 @@ public class HibernateUtils {
         properties.put(AvailableSettings.DIALECT, hibernateConfig.getDialect());
         properties.put(AvailableSettings.CURRENT_SESSION_CONTEXT_CLASS, "thread");
         properties.put(AvailableSettings.HBM2DDL_AUTO, "update");
-        properties.put(AvailableSettings.CONNECTION_PROVIDER, "org.hibernate.connection.C3P0ConnectionProvider");
-        properties.put(AvailableSettings.C3P0_MIN_SIZE, "5");
-        properties.put(AvailableSettings.C3P0_MAX_SIZE, "20");
-        properties.put(AvailableSettings.C3P0_ACQUIRE_INCREMENT, "5");
-        properties.put(AvailableSettings.C3P0_TIMEOUT, "600");
+        properties.put(AvailableSettings.CONNECTION_PROVIDER, HikariCPConnectionProvider.class.getName());
         // boilerplate
         configuration.setProperties(properties);
         // configure entity classes
