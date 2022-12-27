@@ -62,12 +62,13 @@ public abstract class GenericDataProvider<T> {
         return ret;
     }
 
-    public void execInTransaction(InTransactionExecutorVoid ite) {
+    public int execInTransaction(InTransactionExecutorVoid ite) {
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
-        ite.executeInTransaction(session);
+        int changed = ite.executeInTransaction(session);
         transaction.commit();
         session.close();
+        return changed;
     }
 
     public List<T> findAllByPredicate() {
@@ -103,10 +104,16 @@ public abstract class GenericDataProvider<T> {
     }
 
     public void persist(T o) {
-        execInTransaction(session -> session.persist(o));
+        execInTransaction(session -> {
+            session.persist(o);
+            return 1;
+        });
     }
 
     public void delete(T o) {
-        execInTransaction(session -> session.remove(o));
+        execInTransaction(session -> {
+            session.remove(o);
+            return 1;
+        });
     }
 }

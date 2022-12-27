@@ -24,5 +24,5 @@ import org.hibernate.Session;
 @FunctionalInterface
 public interface InTransactionExecutorVoid {
 
-    public void executeInTransaction(Session session);
+    public int executeInTransaction(Session session);
 }
