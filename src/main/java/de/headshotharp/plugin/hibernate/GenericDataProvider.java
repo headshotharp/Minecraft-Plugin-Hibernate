@@ -35,25 +35,23 @@ import jakarta.persistence.criteria.Root;
 import lombok.Getter;
 
 @Getter
-public class DataProviderBase<T> {
+public abstract class GenericDataProvider<T> {
 
     private SessionFactory sessionFactory;
-    private Class<T> clazz;
 
-    public DataProviderBase(Class<T> clazz, SessionFactory sessionFactory) {
-        this.clazz = clazz;
+    protected GenericDataProvider(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
-    public DataProviderBase(Class<T> clazz, HibernateConfig hibernateConfig, Class<?> baseClass) {
-        this.clazz = clazz;
+    protected GenericDataProvider(HibernateConfig hibernateConfig, Class<?> baseClass) {
         sessionFactory = new HibernateUtils(hibernateConfig, baseClass).createSessionFactory();
     }
 
-    public DataProviderBase(Class<T> clazz, HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
-        this.clazz = clazz;
+    protected GenericDataProvider(HibernateConfig hibernateConfig, List<Class<?>> daoClasses) {
         sessionFactory = new HibernateUtils(hibernateConfig, daoClasses).createSessionFactory();
     }
+
+    public abstract Class<T> getEntityClass();
 
     public List<T> getInTransaction(InTransactionExecutor<T> ite) {
         Session session = sessionFactory.openSession();
@@ -79,8 +77,8 @@ public class DataProviderBase<T> {
     public List<T> findAllByPredicate(PredicateProvider<T> predicateProvider) {
         return getInTransaction(session -> {
             CriteriaBuilder builder = session.getCriteriaBuilder();
-            CriteriaQuery<T> criteria = builder.createQuery(clazz);
-            Root<T> root = criteria.from(clazz);
+            CriteriaQuery<T> criteria = builder.createQuery(getEntityClass());
+            Root<T> root = criteria.from(getEntityClass());
             // set predicates
             List<Predicate> predicates = new LinkedList<>();
             if (predicateProvider != null) {
@@ -104,11 +102,11 @@ public class DataProviderBase<T> {
         }
     }
 
-    public void persist(Object o) {
+    public void persist(T o) {
         execInTransaction(session -> session.persist(o));
     }
 
-    public void delete(Object o) {
+    public void delete(T o) {
         execInTransaction(session -> session.remove(o));
     }
 }
