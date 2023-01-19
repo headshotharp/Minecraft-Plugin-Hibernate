@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 import de.headshotharp.plugin.hibernate.config.HibernateConfig;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -43,6 +44,7 @@ import lombok.Getter;
 public abstract class GenericDataProvider<T> {
 
     private SessionFactory sessionFactory;
+    private Session currentSession;
 
     /**
      * Create GenericDataProvider with given SessionFactory
@@ -77,6 +79,15 @@ public abstract class GenericDataProvider<T> {
     }
 
     /**
+     * Create GenericDataProvider and use the given session for all transactions
+     *
+     * @param currentSession the provided already opened session
+     */
+    protected GenericDataProvider(Session currentSession) {
+        this.currentSession = currentSession;
+    }
+
+    /**
      * Specifies the entity class of this data provider
      *
      * @return entity class
@@ -91,12 +102,16 @@ public abstract class GenericDataProvider<T> {
      * @return entity list returned by the executor
      */
     public List<T> getInTransaction(InTransactionExecutor<T> ite) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
-        List<T> ret = ite.executeInTransaction(session);
-        transaction.commit();
-        session.close();
-        return ret;
+        if (currentSession != null) {
+            return ite.executeInTransaction(currentSession);
+        } else {
+            Session session = sessionFactory.openSession();
+            Transaction transaction = session.beginTransaction();
+            List<T> ret = ite.executeInTransaction(session);
+            transaction.commit();
+            session.close();
+            return ret;
+        }
     }
 
     /**
@@ -107,12 +122,16 @@ public abstract class GenericDataProvider<T> {
      * @return the amount of changed rows
      */
     public int execInTransaction(InTransactionExecutorVoid ite) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
-        int changed = ite.executeInTransaction(session);
-        transaction.commit();
-        session.close();
-        return changed;
+        if (currentSession != null) {
+            return ite.executeInTransaction(currentSession);
+        } else {
+            Session session = sessionFactory.openSession();
+            Transaction transaction = session.beginTransaction();
+            int changed = ite.executeInTransaction(session);
+            transaction.commit();
+            session.close();
+            return changed;
+        }
     }
 
     /**
@@ -131,6 +150,18 @@ public abstract class GenericDataProvider<T> {
      * @return list of found entities
      */
     public List<T> findAllByPredicate(PredicateProvider<T> predicateProvider) {
+        return findAllByPredicate(predicateProvider, -1, -1);
+    }
+
+    /**
+     * Find all entitys in transaction filtered by the given predicate provider
+     *
+     * @param predicateProvider filter for results
+     * @param startPosition     position of the first result,numbered from 0
+     * @param maxResults        maximum number of results to retrieve
+     * @return list of found entities
+     */
+    public List<T> findAllByPredicate(PredicateProvider<T> predicateProvider, int startPosition, int maxResults) {
         return getInTransaction(session -> {
             CriteriaBuilder builder = session.getCriteriaBuilder();
             CriteriaQuery<T> criteria = builder.createQuery(getEntityClass());
@@ -141,7 +172,14 @@ public abstract class GenericDataProvider<T> {
                 predicateProvider.addPredicates(builder, criteria, root, predicates);
             }
             criteria.where(builder.and(predicates.toArray(new Predicate[0])));
-            return session.createQuery(criteria).getResultList();
+            Query<T> query = session.createQuery(criteria);
+            if (startPosition > 0) {
+                query.setFirstResult(startPosition);
+            }
+            if (maxResults > 0) {
+                query.setMaxResults(maxResults);
+            }
+            return query.getResultList();
         });
     }
 
@@ -153,7 +191,20 @@ public abstract class GenericDataProvider<T> {
      * @return found entity
      */
     public Optional<T> findByPredicate(PredicateProvider<T> predicateProvider) {
-        List<T> resultList = findAllByPredicate(predicateProvider);
+        return findByPredicate(predicateProvider, -1, -1);
+    }
+
+    /**
+     * Find unique entity in transaction filtered by the given predicate provider.
+     * Returns empty if none or multiple results are found.
+     *
+     * @param predicateProvider filter for results
+     * @param startPosition     position of the first result,numbered from 0
+     * @param maxResults        maximum number of results to retrieve
+     * @return found entity
+     */
+    public Optional<T> findByPredicate(PredicateProvider<T> predicateProvider, int startPosition, int maxResults) {
+        List<T> resultList = findAllByPredicate(predicateProvider, startPosition, maxResults);
         if (resultList.size() == 1) {
             return Optional.of(resultList.get(0));
         } else {
