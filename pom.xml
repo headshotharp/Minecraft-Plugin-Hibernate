@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.headshotharp.minecraft</groupId>
     <artifactId>plugin-hibernate</artifactId>
-    <version>1.19.2-1.5-SNAPSHOT</version>
+    <version>1.19.3-1.5-SNAPSHOT</version>
 
     <name>Minecraft Plugin Hibernate</name>
     <inceptionYear>2022</inceptionYear>
@@ -53,7 +53,7 @@
         <hibenate-validator.version>8.0.0.Final</hibenate-validator.version>
         <validation-api.version>3.0.2</validation-api.version>
         <glassfish-el.version>4.0.2</glassfish-el.version>
-        <mysql.version>8.0.31</mysql.version>
+        <mysql.version>8.0.32</mysql.version>
         <postgres.version>42.5.1</postgres.version>
         <h2.version>2.1.214</h2.version>
         <reflections.version>0.10.2</reflections.version>
