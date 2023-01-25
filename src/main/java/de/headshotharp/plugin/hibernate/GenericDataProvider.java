@@ -105,12 +105,12 @@ public abstract class GenericDataProvider<T> {
         if (currentSession != null) {
             return ite.executeInTransaction(currentSession);
         } else {
-            Session session = sessionFactory.openSession();
-            Transaction transaction = session.beginTransaction();
-            List<T> ret = ite.executeInTransaction(session);
-            transaction.commit();
-            session.close();
-            return ret;
+            try (Session session = sessionFactory.openSession()) {
+                Transaction transaction = session.beginTransaction();
+                List<T> ret = ite.executeInTransaction(session);
+                transaction.commit();
+                return ret;
+            }
         }
     }
 
@@ -125,12 +125,12 @@ public abstract class GenericDataProvider<T> {
         if (currentSession != null) {
             return ite.executeInTransaction(currentSession);
         } else {
-            Session session = sessionFactory.openSession();
-            Transaction transaction = session.beginTransaction();
-            int changed = ite.executeInTransaction(session);
-            transaction.commit();
-            session.close();
-            return changed;
+            try (Session session = sessionFactory.openSession()) {
+                Transaction transaction = session.beginTransaction();
+                int changed = ite.executeInTransaction(session);
+                transaction.commit();
+                return changed;
+            }
         }
     }
 
